@@ -1,0 +1,61 @@
+import nltk
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.corpus import stopwords
+from string import punctuation
+import heapq
+
+# Download required NLTK resources
+nltk.download('punkt')
+nltk.download('stopwords')
+
+# Input: Long article text
+article_text = """
+Artificial Intelligence (AI) is transforming the way we interact with technology. It is being integrated 
+into everything from our phones and home assistants to our vehicles and healthcare systems. 
+AI technologies such as natural language processing, computer vision, and machine learning algorithms 
+are enabling machines to understand, interpret, and even generate human language and visuals. 
+The rise of generative models like GPT-4 and diffusion models in art have also opened new doors 
+in creativity and productivity. While AI holds immense promise, it also raises ethical concerns 
+regarding privacy, job displacement, and bias in algorithms. Governments and organizations are 
+actively exploring regulations and guidelines to ensure AI is developed and deployed responsibly.
+"""
+
+# Step 1: Tokenize into sentences
+sentences = sent_tokenize(article_text)
+
+# Step 2: Tokenize into words and calculate word frequencies
+stop_words = set(stopwords.words('english') + list(punctuation))
+word_frequencies = {}
+
+for word in word_tokenize(article_text.lower()):
+    if word not in stop_words:
+        if word not in word_frequencies:
+            word_frequencies[word] = 1
+        else:
+            word_frequencies[word] += 1
+
+# Step 3: Normalize word frequencies
+max_freq = max(word_frequencies.values())
+for word in word_frequencies:
+    word_frequencies[word] = word_frequencies[word] / max_freq
+
+# Step 4: Score each sentence based on word frequencies
+sentence_scores = {}
+for sent in sentences:
+    for word in word_tokenize(sent.lower()):
+        if word in word_frequencies:
+            if len(sent.split(' ')) < 40:  # optional: skip long sentences
+                if sent not in sentence_scores:
+                    sentence_scores[sent] = word_frequencies[word]
+                else:
+                    sentence_scores[sent] += word_frequencies[word]
+
+# Step 5: Select top sentences (3 in this case)
+summary_sentences = heapq.nlargest(3, sentence_scores, key=sentence_scores.get)
+
+# Step 6: Combine sentences for final summary
+summary = ' '.join(summary_sentences)
+
+# ✅ Output
+print("📄 Original Article:\n", article_text)
+print("\n📝 Extractive Summary:\n", summary)
